@@ -464,8 +464,6 @@ class InterfaceSetup(object):
         for index, entry in enumerate(list_squares_row8, start=57):
             self.dict_squares.update({entry: index})
             self.total_entries.append(entry)
-        print(self.total_entries)
-
         '''Create a chess title label'''
 
         label_title = Label(window, fg="#2130c8", bg="#55f9bb", font=("Comic Sans", 30, "bold"), bd=10,
@@ -486,9 +484,6 @@ class InterfaceSetup(object):
                             justify="center", text="")
         label_check.place(x=800, y=500)
 
-        # CREATE DICTIONARY FOR SQUARES
-
-        print(self.dict_squares)
         '''Make the bindings now'''
         # result square is not necessary
         squareA1.bind("<1>", lambda event, entry=squareA1: self.insert_piece(entry,
