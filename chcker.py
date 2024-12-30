@@ -12,11 +12,12 @@ class Checker:
     def check_chess(self, position_king, position_queen):
         '''vertical check'''
         c = self.check_higher(position_king, position_queen)
+        king_queen_same_row = self.check_if_king_queen_same_row(position_king, position_queen)
         if c % 8 == 0:
             return True, 0
         '''horizontal check'''
         c = self.check_higher(position_king, position_queen)
-        if c <= 7:
+        if c <= 7 and king_queen_same_row:
             return True, 1
         '''diagonal check'''
         if abs(position_king - position_queen) % 7 == 0 and ((
@@ -43,6 +44,17 @@ class Checker:
         if pos_queen % 2 == 0 and pos_queen % 2 == 0:
             return True
         return False
+    @staticmethod
+    def check_if_king_queen_same_row(pos_king, pos_queen):
+        rows = constans_values.create_list_rows()
+        print(rows)
+        print(pos_queen)
+        print(pos_king)
+        for row in rows:
+            if pos_queen in row and pos_king in row:
+                return True
+        return False
+
 
 
     def get_position_pieces(self, pos_queen, pos_king):

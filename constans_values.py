@@ -16,3 +16,15 @@ def create_map_positions():
             starting_pos += 8
         counter_columns += 1
     return map_positions
+
+
+def create_list_rows():
+    list_rows = list()
+    start = 1
+    for row_number in range(0, 8):
+        row = list()
+        for i in range(start, start + 8):
+            row.append(i)
+        list_rows.append(row)
+        start += 8
+    return list_rows
