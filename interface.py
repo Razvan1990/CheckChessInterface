@@ -5,6 +5,11 @@ from tkinter import *
 import constans_values
 from chcker import Checker
 
+'''
+#This is derived from the CheckChessInterface project and updated to check mate
+#Featues have been added in other files - all are referenced in the respective files
+'''
+
 
 class InterfaceSetup(object):
 
@@ -77,7 +82,7 @@ class InterfaceSetup(object):
                             self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
 
     def check_chess(self, position_king, position_queen):
-        result, type_chess = self.checker.check_chess(position_king, position_queen)
+        result = self.checker.check_chess_queen(position_king, position_queen)
         map_positions_queen, map_position_king = self.checker.get_position_pieces(
             position_queen, position_king)
         '''Make label for chess and type of chess'''
