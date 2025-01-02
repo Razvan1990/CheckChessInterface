@@ -15,7 +15,8 @@ Mate example:
 ![image](https://github.com/user-attachments/assets/4d926316-e1f7-4542-bf98-bffde53140cf)
 
 Chess example:
-![image](https://github.com/user-attachments/assets/e98fa058-0164-41df-8dd9-0281abb6aec2)
+![image](https://github.com/user-attachments/assets/364840eb-4707-4e39-8727-9a5b2cd12e74)
+
 - only valid escape is E5 - just check
 
 
