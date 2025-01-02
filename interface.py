@@ -1,9 +1,12 @@
 import os
 import tkinter
 from tkinter import *
-
+from tkinter import messagebox
+from tkinter.simpledialog import askstring
 import constans_values
+from paste.util.multidict import MultiDict
 from chcker import Checker
+from checker_positions import CheckPiecePositions
 
 '''
 #This is derived from the CheckChessInterface project and updated to check mate
@@ -15,86 +18,267 @@ class InterfaceSetup(object):
 
     def __init__(self):
         self.checker = Checker()
+        self.pos_checker = CheckPiecePositions()
         self.folder = r"G:\pycharm\pythonProject\CheckChessInterfac\images"
         self.dict_squares = {}
         self.list_stored_pieces = []
+        self.list_stored_entries = []
+        self.list_stored_chess_positions = []
         self.total_entries = []
+        self.dict_pieces_positions = MultiDict()
 
-    def insert_piece(self, entry, *args):
-        if len(self.list_stored_pieces) % 2 == 0:
-            print(entry)
-            entry.delete(0, "end")
-            entry.insert(0, "K")
-            self.list_stored_pieces.append(entry)
-            print(self.list_stored_pieces[0]["text"])
-        elif len(self.list_stored_pieces) % 2 == 1 and self.list_stored_pieces[0]["text"] == "":
-            entry.delete(0, "end")
-            entry.insert(0, "Q")
-            self.list_stored_pieces.append(entry)
-        # start checking if we have 2 values in list
-        if len(self.list_stored_pieces) == 2:
-            '''now we start the process'''
-            # 1.Enable the button for checking
-            button_check_chess["state"] = tkinter.NORMAL
-            # 2. Disable all the other buttons
-            for i in range(0, len(self.total_entries)):
-                if self.total_entries[i] not in self.list_stored_pieces:
-                    # make logic per row
-                    if 0 <= i <= 7:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                    if 8 <= i <= 15:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-                    if 16 <= i <= 23:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                    if 24 <= i <= 31:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-                    if 32 <= i <= 39:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                    if 40 <= i <= 47:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-                    if 48 <= i <= 55:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                    if 56 <= i <= 63:
-                        if i % 2 == 0:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
-                        else:
-                            self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
-
-    def check_chess(self, position_king, position_queen):
-        result = self.checker.check_chess_queen(position_king, position_queen)
-        map_positions_queen, map_position_king = self.checker.get_position_pieces(
-            position_queen, position_king)
-        '''Make label for chess and type of chess'''
-        if result:
-            label_check["text"] = "{} from QUEEN on {} to KING on {}".format(constans_values.TYPE_CHECKS[type_chess],
-                                                                             map_positions_queen, map_position_king)
-            label_check["fg"] = "#176e2c"
-            button_check_chess["state"] = tkinter.DISABLED
+    def insert_piece(self, piece_type, ):
+        '''
+        :param piece_type:
+        :return: insert the piece on the correct square based on what we choose
+        '''
+        table_to_position_dict = constans_values.create_position_to_number_map()
+        # first we will enable the button for mate if we have 2 pieces at least
+        if len(self.list_stored_chess_positions) >= 2:
+            button_check_mate["state"] = tkinter.NORMAL
+        table_position = askstring("POSITION PIECE", "Insert the position for {}".format(piece_type)).upper()
+        # 1. First check is to see if we inserted a correct position
+        if table_position.upper() not in table_to_position_dict:
+            messagebox.showerror("INVALID POSITION", "Please select a chess position :A1->H1", )
+            return
+        position_piece = table_to_position_dict[table_position]
+        # 2 check if the square is not occupied
+        if self.pos_checker.check_position_free(table_position, self.list_stored_chess_positions):
+            messagebox.showerror("POSITION ALREADY TAKEN", "Please select a free position", )
+            return
+        # 3. Third check is to see if the black king is already there - it must be there as it is the only button active
+        if piece_type != constans_values.PIECES[0]:
+            if len(self.list_stored_pieces) == 0:
+                messagebox.showinfo("BLACK KING MISSING", "The black king has not been selected", )
+                return
         else:
-            label_check["text"] = "False alarm! {}".format(constans_values.TYPE_CHECKS[3])
+            # put the black king and enable everything
+            self.list_stored_pieces.append(constans_values.PIECES[0])
+            self.list_stored_chess_positions.append(table_position.upper())
+            # now we can enable all buttons
+            button_insert_white_king["state"] = tkinter.NORMAL
+            button_insert_queen["state"] = tkinter.NORMAL
+            button_insert_rook["state"] = tkinter.NORMAL
+            button_insert_bishop["state"] = tkinter.NORMAL
+            button_insert_knight["state"] = tkinter.NORMAL
+            button_insert_pawn["state"] = tkinter.NORMAL
+            button_insert_black_king["state"] = tkinter.DISABLED
+            # add in the multidict the black king position to start
+            self.dict_pieces_positions.add(constans_values.PIECES[0], position_piece)
+            # add in the respective entry the black king
+            for entry in self.dict_squares:
+                if self.dict_squares[entry] == position_piece:
+                    entry.delete(0, "end")
+                    entry.insert(0, "BK")
+                    self.list_stored_entries.append(entry)
+                    break
+        '''custom checks for every piece'''
+        # A. white king
+        if piece_type == constans_values.PIECES[1]:
+            # a. check to not have 2 white kings
+            if constans_values.PIECES[1] in self.list_stored_pieces:
+                messagebox.showerror("KING PRESENT", "The white king is already on the table!", )
+                return
+            are_kings_near = self.pos_checker.check_position_kings(
+                self.dict_pieces_positions.getone(constans_values.PIECES[0]), position_piece)
+            if are_kings_near:
+                messagebox.showinfo("KINGS ARE ON NEIGHBOUR SQUARES", "Kings cannot be on neighbour squares", )
+                return
+            self.list_stored_pieces.append(constans_values.PIECES[1])
+            self.list_stored_chess_positions.append(table_position.upper())
+            self.dict_pieces_positions.add(constans_values.PIECES[1], position_piece)
+            for entry in self.dict_squares:
+                if self.dict_squares[entry] == position_piece:
+                    entry.delete(0, "end")
+                    entry.insert(0, "WK")
+                    entry["fg"] = "#d9e1e1"
+                    self.list_stored_entries.append(entry)
+                    break
+        # B bishops
+        elif piece_type == constans_values.PIECES[4]:
+            # check to see if we don't have more than 2 bishops
+            counter_bishops = 0
+            for piece in self.list_stored_pieces:
+                if piece == constans_values.PIECES[4]:
+                    counter_bishops += 1
+            if counter_bishops >= 2:
+                messagebox.showerror("BISHOPS ALREADY PRESENT", "There are already 2 bishops on the board!", )
+                return
+            if constans_values.PIECES[4] in self.list_stored_pieces:
+                are_bishops_on_same_colour = self.pos_checker.check_positions_bishops(
+                    self.dict_pieces_positions.getone(constans_values.PIECES[4]), position_piece)
+                if are_bishops_on_same_colour:
+                    messagebox.showinfo("BISHOPS ON SAME COLOUR", "Bishops cannot be on the same colour", )
+                    return
+            self.list_stored_pieces.append(constans_values.PIECES[4])
+            self.list_stored_chess_positions.append(table_position.upper())
+            self.dict_pieces_positions.add(constans_values.PIECES[4], position_piece)
+            for entry in self.dict_squares:
+                if self.dict_squares[entry] == position_piece:
+                    entry.delete(0, "end")
+                    entry.insert(0, "b")
+                    entry["fg"] = "#d9e1e1"
+                    self.list_stored_entries.append(entry)
+                    break
+        # PAWNS
+        elif piece_type == constans_values.PIECES[6]:
+            # check if pawns are not on first and last row
+            if self.pos_checker.check_position_pawn(position_piece):
+                messagebox.showinfo("PAWNS NOT CORRECT VALUES", "Pawns cannot be positioned on the first or last row", )
+                return
+            # check if we don't have more than 8 pawns - kind of silly check :)
+            counter_pawns = 0
+            for piece in self.list_stored_pieces:
+                if piece == constans_values.PIECES[6]:
+                    counter_pawns += 1
+            if counter_pawns == 8:
+                messagebox.showerror("TOO MANY PAWNS", "There are already 8 pawns on the board!", )
+                return
+            self.list_stored_pieces.append(constans_values.PIECES[6])
+            self.list_stored_chess_positions.append(table_position.upper())
+            self.dict_pieces_positions.add(constans_values.PIECES[6], position_piece)
+            for entry in self.dict_squares:
+                if self.dict_squares[entry] == position_piece:
+                    entry.delete(0, "end")
+                    entry.insert(0, "p")
+                    entry["fg"] = "#d9e1e1"
+                    self.list_stored_entries.append(entry)
+                    break
+        # knights, rooks, queens
+        # we do not need any conditions for them
+        elif piece_type == constans_values.PIECES[2]:
+            self.list_stored_pieces.append(constans_values.PIECES[2])
+            self.list_stored_chess_positions.append(table_position.upper())
+            self.dict_pieces_positions.add(constans_values.PIECES[2], position_piece)
+            for entry in self.dict_squares:
+                if self.dict_squares[entry] == position_piece:
+                    entry.delete(0, "end")
+                    entry.insert(0, "Q")
+                    entry["fg"] = "#d9e1e1"
+                    self.list_stored_entries.append(entry)
+                    break
+        elif piece_type == constans_values.PIECES[3]:
+            self.list_stored_pieces.append(constans_values.PIECES[3])
+            self.list_stored_chess_positions.append(table_position.upper())
+            self.dict_pieces_positions.add(constans_values.PIECES[3], position_piece)
+            for entry in self.dict_squares:
+                if self.dict_squares[entry] == position_piece:
+                    entry.delete(0, "end")
+                    entry.insert(0, "r")
+                    entry["fg"] = "#d9e1e1"
+                    self.list_stored_entries.append(entry)
+                    break
+        elif piece_type == constans_values.PIECES[5]:
+            self.list_stored_pieces.append(constans_values.PIECES[5])
+            self.list_stored_chess_positions.append(table_position.upper())
+            self.dict_pieces_positions.add(constans_values.PIECES[5], position_piece)
+            for entry in self.dict_squares:
+                if self.dict_squares[entry] == position_piece:
+                    entry.delete(0, "end")
+                    entry.insert(0, "k")
+                    entry["fg"] = "#d9e1e1"
+                    self.list_stored_entries.append(entry)
+                    break
+        #check and debug purposes
+        print(self.list_stored_entries)
+        print(self.list_stored_pieces)
+        print(self.list_stored_chess_positions)
+        print(self.dict_pieces_positions)
+
+    def check_mate(self):
+        '''
+        we do not need any parameters as all relevant stuff needed is in the multidict
+        :return:if it is check mate or just check or no check at all
+        '''
+        is_mate = self.checker.check_if_mate(self.dict_pieces_positions)
+        # disable now all the buttons
+        button_insert_white_king["state"] = tkinter.DISABLED
+        button_insert_queen["state"] = tkinter.DISABLED
+        button_insert_rook["state"] = tkinter.DISABLED
+        button_insert_bishop["state"] = tkinter.DISABLED
+        button_insert_knight["state"] = tkinter.DISABLED
+        button_insert_pawn["state"] = tkinter.DISABLED
+        button_insert_black_king["state"] = tkinter.DISABLED
+        # disable empty squares
+        for i in range(0, len(self.total_entries)):
+            if self.total_entries[i] not in self.list_stored_entries:
+                # make logic per row
+                if 0 <= i <= 7:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                if 8 <= i <= 15:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+                if 16 <= i <= 23:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                if 24 <= i <= 31:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+                if 32 <= i <= 39:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                if 40 <= i <= 47:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+                if 48 <= i <= 55:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                if 56 <= i <= 63:
+                    if i % 2 == 0:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#7d7861")
+                    else:
+                        self.total_entries[i].configure(state=tkinter.DISABLED, disabledbackground="#eef7d8")
+        if is_mate == "Mate":
+            label_check["text"] = "IT IS CHECK MATE"
+            label_check["fg"] = "#176e2c"
+            button_check_mate["state"] = tkinter.DISABLED
+            return
+        '''just check now'''
+        if is_mate == 1:
+            label_check["text"] = "IT IS JUST CHECK FROM THE {}".format(constans_values.PIECES[2])
+            label_check["fg"] = "#e2b441"
+            button_check_mate["state"] = tkinter.DISABLED
+            return
+        elif is_mate == 2:
+            label_check["text"] = "IT IS JUST CHECK FROM THE {}".format(constans_values.PIECES[3])
+            label_check["fg"] = "#e2b441"
+            button_check_mate["state"] = tkinter.DISABLED
+            return
+        elif is_mate == 3:
+            label_check["text"] = "IT IS JUST CHECK FROM THE {}".format(constans_values.PIECES[4])
+            label_check["fg"] = "#e2b441"
+            button_check_mate["state"] = tkinter.DISABLED
+            return
+        elif is_mate == 4:
+            label_check["text"] = "IT IS JUST CHECK FROM THE {}".format(constans_values.PIECES[5])
+            label_check["fg"] = "#e2b441"
+            button_check_mate["state"] = tkinter.DISABLED
+            return
+        elif is_mate == 5:
+            label_check["text"] = "IT IS JUST CHECK FROM THE {}".format(constans_values.PIECES[6])
+            label_check["fg"] = "#e2b441"
+            button_check_mate["state"] = tkinter.DISABLED
+            return
+        elif is_mate == 0:
+            label_check["text"] = "False alarm! NO CHECK"
             label_check["fg"] = "#e13e0e"
-            button_check_chess["state"] = tkinter.DISABLED
+            button_check_mate["state"] = tkinter.DISABLED
+            return
 
     def create_game(self, window):
         '''
@@ -184,10 +368,15 @@ class InterfaceSetup(object):
         global squareH8
 
         global label_check
-        global button_check_chess
+        global button_insert_black_king
+        global button_insert_white_king
+        global button_insert_queen
+        global button_insert_rook
+        global button_insert_bishop
+        global button_insert_knight
+        global button_insert_pawn
+        global button_check_mate
 
-        # we use this to keep and to store where x is marked
-        result_square = StringVar()
         '''Create entries'''
         list_squares_row1 = list()
         squareA1 = Entry(window, fg="#313528", bg="#eef7d8", font=("Comic Sans", 28, "bold"), bd=5,
@@ -475,157 +664,63 @@ class InterfaceSetup(object):
                             cursor="spraycan", width=25, justify="center", text="CHECK CHESS PROGRAM")
         label_title.place(x=300, y=100)
 
-        '''Create button to check chess'''
-        button_check_chess = Button(window, text="CHECK CHESS", width=13, height=2, fg="#e5ff3d", bg="#126bad",
-                                    font=("Helvetica", 14, "bold"),
-                                    command=lambda: self.check_chess(self.dict_squares[self.list_stored_pieces[0]],
-                                                                     self.dict_squares[self.list_stored_pieces[1]]))
-        # command=self.get_actual_weather))
-        button_check_chess["state"] = tkinter.DISABLED
-        button_check_chess.place(x=920, y=350)
+        '''Create buttons for the pieces'''
+        # black king
+        button_insert_black_king = Button(window, text="INSERT BLACK KING", width=18, height=2, fg="#1c0803",
+                                          bg="#df2250",
+                                          font=("Helvetica", 12, "bold"),
+                                          command=lambda: self.insert_piece(constans_values.PIECES[0]))
+        # white king
+        button_insert_white_king = Button(window, text="INSERT WHITE KING", width=18, height=2, fg="#fffefb",
+                                          bg="#8ff436",
+                                          font=("Helvetica", 12, "bold"),
+                                          command=lambda: self.insert_piece(constans_values.PIECES[1]))
+        button_insert_white_king["state"] = tkinter.DISABLED
+        # queen
+        button_insert_queen = Button(window, text="INSERT QUEEN", width=18, height=2, fg="#fffefb", bg="#7eb2a9",
+                                     font=("Helvetica", 12, "bold"),
+                                     command=lambda: self.insert_piece(constans_values.PIECES[2]))
+        button_insert_queen["state"] = tkinter.DISABLED
+        # rook
+        button_insert_rook = Button(window, text="INSERT ROOK ", width=18, height=2, fg="#fffefb", bg="#2d496b",
+                                    font=("Helvetica", 12, "bold"),
+                                    command=lambda: self.insert_piece(constans_values.PIECES[3]))
+        button_insert_rook["state"] = tkinter.DISABLED
+        # bishop
+        button_insert_bishop = Button(window, text="INSERT BISHOP", width=18, height=2, fg="#fffefb", bg="#76258e",
+                                      font=("Helvetica", 12, "bold"),
+                                      command=lambda: self.insert_piece(constans_values.PIECES[4]))
+        button_insert_bishop["state"] = tkinter.DISABLED
+        # knight
+        button_insert_knight = Button(window, text="INSERT KNIGHT", width=18, height=2, fg="#fffefb", bg="#caab0d",
+                                      font=("Helvetica", 12, "bold"),
+                                      command=lambda: self.insert_piece(constans_values.PIECES[5]))
+        button_insert_knight["state"] = tkinter.DISABLED
+        # pawn
+        button_insert_pawn = Button(window, text="INSERT PAWN", width=18, height=2, fg="#fffefb", bg="#5a5850",
+                                    font=("Helvetica", 12, "bold"),
+                                    command=lambda: self.insert_piece(constans_values.PIECES[6]))
+        button_insert_pawn["state"] = tkinter.DISABLED
+        # put them on the screen
+        button_insert_black_king.place(x=50, y=200)
+        button_insert_white_king.place(x=50, y=275)
+        button_insert_queen.place(x=250, y=275)
+        button_insert_rook.place(x=450, y=275)
+        button_insert_bishop.place(x=650, y=275)
+        button_insert_knight.place(x=850, y=275)
+        button_insert_pawn.place(x=1050, y=275)
+
+        button_check_mate = Button(window, text="CHECK MATE", width=13, height=2, fg="#0f1010", bg="#55f9bb",
+                                   font=("Helvetica", 14, "bold"), bd=5, highlightbackground="#1d607b",
+                                   highlightthickness=2,
+                                   command=lambda: self.check_mate())
+        button_check_mate["state"] = tkinter.DISABLED
+        button_check_mate.place(x=920, y=400)
 
         '''Create label where we will put the result'''
         label_check = Label(window, fg="#d61515", bg="#55f9bb", font=("Comic Sans", 14, "bold"), bd=4, width=40,
                             justify="center", text="")
-        label_check.place(x=800, y=500)
-
-        '''Make the bindings now'''
-        # result square is not necessary
-        squareA1.bind("<1>", lambda event, entry=squareA1: self.insert_piece(entry,
-                                                                             result_square))
-        squareA2.bind("<1>", lambda event, entry=squareA2: self.insert_piece(entry,
-                                                                             result_square))
-        squareA3.bind("<1>", lambda event, entry=squareA3: self.insert_piece(entry,
-                                                                             result_square))
-        squareA4.bind("<1>", lambda event, entry=squareA4: self.insert_piece(entry,
-                                                                             result_square))
-        squareA5.bind("<1>", lambda event, entry=squareA5: self.insert_piece(entry,
-                                                                             result_square))
-        squareA6.bind("<1>", lambda event, entry=squareA6: self.insert_piece(entry,
-                                                                             result_square))
-        squareA7.bind("<1>", lambda event, entry=squareA7: self.insert_piece(entry,
-                                                                             result_square))
-        squareA8.bind("<1>", lambda event, entry=squareA8: self.insert_piece(entry,
-                                                                             result_square))
-
-        squareB1.bind("<1>", lambda event, entry=squareB1: self.insert_piece(entry,
-                                                                             result_square))
-        squareB2.bind("<1>", lambda event, entry=squareB2: self.insert_piece(entry,
-                                                                             result_square))
-        squareB3.bind("<1>", lambda event, entry=squareB3: self.insert_piece(entry,
-                                                                             result_square))
-        squareB4.bind("<1>", lambda event, entry=squareB4: self.insert_piece(entry,
-                                                                             result_square))
-        squareB5.bind("<1>", lambda event, entry=squareB5: self.insert_piece(entry,
-                                                                             result_square))
-        squareB6.bind("<1>", lambda event, entry=squareB6: self.insert_piece(entry,
-                                                                             result_square))
-        squareB7.bind("<1>", lambda event, entry=squareB7: self.insert_piece(entry,
-                                                                             result_square))
-        squareB8.bind("<1>", lambda event, entry=squareB8: self.insert_piece(entry,
-                                                                             result_square))
-
-        squareC1.bind("<1>", lambda event, entry=squareC1: self.insert_piece(entry,
-                                                                             result_square))
-        squareC2.bind("<1>", lambda event, entry=squareC2: self.insert_piece(entry,
-                                                                             result_square))
-        squareC3.bind("<1>", lambda event, entry=squareC3: self.insert_piece(entry,
-                                                                             result_square))
-        squareC4.bind("<1>", lambda event, entry=squareC4: self.insert_piece(entry,
-                                                                             result_square))
-        squareC5.bind("<1>", lambda event, entry=squareC5: self.insert_piece(entry,
-                                                                             result_square))
-        squareC6.bind("<1>", lambda event, entry=squareC6: self.insert_piece(entry,
-                                                                             result_square))
-        squareC7.bind("<1>", lambda event, entry=squareC7: self.insert_piece(entry,
-                                                                             result_square))
-        squareC8.bind("<1>", lambda event, entry=squareC8: self.insert_piece(entry,
-                                                                             result_square))
-
-        squareD1.bind("<1>", lambda event, entry=squareD1: self.insert_piece(entry,
-                                                                             result_square))
-        squareD2.bind("<1>", lambda event, entry=squareD2: self.insert_piece(entry,
-                                                                             result_square))
-        squareD3.bind("<1>", lambda event, entry=squareD3: self.insert_piece(entry,
-                                                                             result_square))
-        squareD4.bind("<1>", lambda event, entry=squareD4: self.insert_piece(entry,
-                                                                             result_square))
-        squareD5.bind("<1>", lambda event, entry=squareD5: self.insert_piece(entry,
-                                                                             result_square))
-        squareD6.bind("<1>", lambda event, entry=squareD6: self.insert_piece(entry,
-                                                                             result_square))
-        squareD7.bind("<1>", lambda event, entry=squareD7: self.insert_piece(entry,
-                                                                             result_square))
-        squareD8.bind("<1>", lambda event, entry=squareD8: self.insert_piece(entry,
-                                                                             result_square))
-
-        squareE1.bind("<1>", lambda event, entry=squareE1: self.insert_piece(entry,
-                                                                             result_square))
-        squareE2.bind("<1>", lambda event, entry=squareE2: self.insert_piece(entry,
-                                                                             result_square))
-        squareE3.bind("<1>", lambda event, entry=squareE3: self.insert_piece(entry,
-                                                                             result_square))
-        squareE4.bind("<1>", lambda event, entry=squareE4: self.insert_piece(entry,
-                                                                             result_square))
-        squareE5.bind("<1>", lambda event, entry=squareE5: self.insert_piece(entry,
-                                                                             result_square))
-        squareE6.bind("<1>", lambda event, entry=squareE6: self.insert_piece(entry,
-                                                                             result_square))
-        squareE7.bind("<1>", lambda event, entry=squareE7: self.insert_piece(entry,
-                                                                             result_square))
-        squareE8.bind("<1>", lambda event, entry=squareE8: self.insert_piece(entry,
-                                                                             result_square))
-
-        squareF1.bind("<1>", lambda event, entry=squareF1: self.insert_piece(entry,
-                                                                             result_square))
-        squareF2.bind("<1>", lambda event, entry=squareF2: self.insert_piece(entry,
-                                                                             result_square))
-        squareF3.bind("<1>", lambda event, entry=squareF3: self.insert_piece(entry,
-                                                                             result_square))
-        squareF4.bind("<1>", lambda event, entry=squareF4: self.insert_piece(entry,
-                                                                             result_square))
-        squareF5.bind("<1>", lambda event, entry=squareF5: self.insert_piece(entry,
-                                                                             result_square))
-        squareF6.bind("<1>", lambda event, entry=squareF6: self.insert_piece(entry,
-                                                                             result_square))
-        squareF7.bind("<1>", lambda event, entry=squareF7: self.insert_piece(entry,
-                                                                             result_square))
-        squareF8.bind("<1>", lambda event, entry=squareF8: self.insert_piece(entry,
-                                                                             result_square))
-
-        squareG1.bind("<1>", lambda event, entry=squareG1: self.insert_piece(entry,
-                                                                             result_square))
-        squareG2.bind("<1>", lambda event, entry=squareG2: self.insert_piece(entry,
-                                                                             result_square))
-        squareG3.bind("<1>", lambda event, entry=squareG3: self.insert_piece(entry,
-                                                                             result_square))
-        squareG4.bind("<1>", lambda event, entry=squareG4: self.insert_piece(entry,
-                                                                             result_square))
-        squareG5.bind("<1>", lambda event, entry=squareG5: self.insert_piece(entry,
-                                                                             result_square))
-        squareG6.bind("<1>", lambda event, entry=squareG6: self.insert_piece(entry,
-                                                                             result_square))
-        squareG7.bind("<1>", lambda event, entry=squareG7: self.insert_piece(entry,
-                                                                             result_square))
-        squareG8.bind("<1>", lambda event, entry=squareG8: self.insert_piece(entry,
-                                                                             result_square))
-
-        squareH1.bind("<1>", lambda event, entry=squareH1: self.insert_piece(entry,
-                                                                             result_square))
-        squareH2.bind("<1>", lambda event, entry=squareH2: self.insert_piece(entry,
-                                                                             result_square))
-        squareH3.bind("<1>", lambda event, entry=squareH3: self.insert_piece(entry,
-                                                                             result_square))
-        squareH4.bind("<1>", lambda event, entry=squareH4: self.insert_piece(entry,
-                                                                             result_square))
-        squareH5.bind("<1>", lambda event, entry=squareH5: self.insert_piece(entry,
-                                                                             result_square))
-        squareH6.bind("<1>", lambda event, entry=squareH6: self.insert_piece(entry,
-                                                                             result_square))
-        squareH7.bind("<1>", lambda event, entry=squareH7: self.insert_piece(entry,
-                                                                             result_square))
-        squareH8.bind("<1>", lambda event, entry=squareH8: self.insert_piece(entry,
-                                                                             result_square))
+        label_check.place(x=800, y=550)
 
     def create_main_gui(self):
         root = Tk()

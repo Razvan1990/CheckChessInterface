@@ -4,7 +4,10 @@ POSITIONS_WHITE = [1, 3, 5, 7, 10, 12, 14, 16, 17, 19, 21, 23, 26, 28, 30, 32, 3
 POSITIONS_BLACK = [2, 4, 6, 8, 9, 11, 13, 15, 18, 20, 22, 24, 25, 27, 29, 31, 34, 36, 38, 40, 41, 43, 45, 47, 50, 52,
                    54, 56, 57, 59, 61, 63]
 COLUMNS = ["A", "B", "C", "D", "E", "F", "G", "H"]
-TYPE_CHECKS = {0: "Vertical Check", 1: "Horizontal Check", 2: "Diagonal Check", 3: "NO CHECK"}
+FIRST_COLUMN = [1, 9, 17, 25, 33, 41, 49, 57]
+LAST_COLUMN = [x + 7 for x in FIRST_COLUMN]
+FIRST_ROW = [1, 2, 3, 4, 5, 6, 7, 8]
+LAST_ROW = [x + 56 for x in FIRST_ROW]
 PIECES = ["BLACK KING", "WHITE KING", "QUEEN", "ROOK", "BISHOP", "KNIGHT", "PAWN"]
 
 
@@ -33,6 +36,7 @@ def create_position_to_number_map():
             map_positions.update({column + str(i): position})
             position += 1
     return map_positions
+
 
 def create_list_rows():
     list_rows = list()

@@ -29,11 +29,13 @@ class CheckPiecePositions(object):
             return True
         return False
 
+    def check_position_pawn(self, pos_pawn):
+        # check to see if the pawns are not placed on the first or last row
+        if pos_pawn in constans_values.FIRST_ROW or pos_pawn in constans_values.LAST_ROW:
+            return True
+        return False
+
     def check_position_free(self, position_piece, list_pieces):
         if position_piece in list_pieces:
             return True
         return False
-
-
-
-

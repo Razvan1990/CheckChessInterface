@@ -1,4 +1,3 @@
-from multidict import MultiDict
 import constans_values
 from checker_positions import CheckPiecePositions
 
@@ -7,10 +6,6 @@ class Checker:
 
     def __init__(self):
         self.pos_checker = CheckPiecePositions()
-        self.first_column = [1, 9, 17, 25, 33, 41, 49, 57]
-        self.last_column = [x + 7 for x in self.first_column]
-        self.first_row = [1, 2, 3, 4, 5, 6, 7, 8]
-        self.last_row = [x + 56 for x in self.first_row]
 
     def check_chess_queen(self, position_king, position_queen):
         '''like in all the check functions we compare position of king with the piece when we try to move the black king from check'''
@@ -134,7 +129,7 @@ class Checker:
         for piece, value in dict_pieces_positions.items():
             if piece == constans_values.PIECES[2]:
                 if self.check_chess_queen(dict_pieces_positions[constans_values.PIECES[0]],
-                                         value):
+                                          value):
                     is_chess_queen = True
                     break
         # 2. check rook
@@ -193,7 +188,7 @@ class Checker:
         we need to get all valid positions so we do not get a number out of bounds
         in order to appeal with the check chess method for the new position, we need to create a new dict every time in which we add the new position of the king
         :param position_black_king:
-        :param dic_pieces_positions:
+        :param dict_pieces_positions:
         :param args:
         :return: check if we run into another check by moving the king to another square when checked
         '''
@@ -280,7 +275,7 @@ class Checker:
             if not self.check_chess(dict_pieces_positions, *args)[0]:
                 return False
         # check now if it is on A column
-        elif position_black_king in self.first_column:
+        elif position_black_king in constans_values.FIRST_COLUMN:
             '''basically we have 5 ways to go'''
             # right
             while constans_values.PIECES[0] in dict_pieces_positions:
@@ -318,7 +313,7 @@ class Checker:
             if not self.check_chess(dict_pieces_positions, *args)[0]:
                 return False
         # check now if it is on H column
-        elif position_black_king in self.last_column:
+        elif position_black_king in constans_values.LAST_COLUMN:
             '''basically we have 5 ways to go'''
             # left
             while constans_values.PIECES[0] in dict_pieces_positions:
@@ -356,7 +351,7 @@ class Checker:
             if not self.check_chess(dict_pieces_positions, *args)[0]:
                 return False
         # check now if it is on first row
-        elif position_black_king in self.first_row:
+        elif position_black_king in constans_values.FIRST_ROW:
             '''basically we have 5 ways to go'''
             # left
             while constans_values.PIECES[0] in dict_pieces_positions:
@@ -393,7 +388,7 @@ class Checker:
             dict_pieces_positions.mixed()
             if not self.check_chess(dict_pieces_positions, *args)[0]:
                 return False
-        elif position_black_king in self.last_row:
+        elif position_black_king in constans_values.LAST_ROW:
             '''basically we have 5 ways to go'''
             # left
             while constans_values.PIECES[0] in dict_pieces_positions:
@@ -501,17 +496,17 @@ class Checker:
                                                       dict_pieces_positions, *args)
         # MATE
         if is_check and can_king_escape:
-            return "It is check mate"
+            return "Mate"
         elif is_check and not can_king_escape:
             if check_type == 1:
-                return "It is just check from the QUEEN"
+                return 1
             if check_type == 2:
-                return "It is just check from the ROOK"
+                return 2
             if check_type == 3:
-                return "It is just check from the BISHOP"
+                return 3
             if check_type == 4:
-                return "It is just check from the KNIGHT"
+                return 4
             if check_type == 5:
-                return "It is just check from the PAWN"
+                return 5
         else:
-            return "NO CHECK"
+            return 0
